@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+// Load .env file
+loadEnvFile(__DIR__ . '/../.env');
+
 // Configuration for Quotes Analysis App
 define('APP_NAME', 'Quotes Analysis');
 define('APP_VERSION', '1.0.0');
@@ -14,7 +17,7 @@ define('ALLOWED_EXTENSIONS', ['csv', 'xlsx', 'xls', 'pdf', 'txt']);
 // Azure Foundry / Claude API settings
 define('AZURE_API_KEY', getenv('AZURE_API_KEY') ?: ''); // Set via environment variable
 define('AZURE_API_ENDPOINT', getenv('AZURE_API_ENDPOINT') ?: 'https://api.anthropic.com/v1/messages');
-define('MODEL_NAME', 'claude-opus-4-1'); // Or whichever model you're using
+define('MODEL_NAME', 'claude-3-haiku-20250307'); // Or whichever model you're using
 define('API_TIMEOUT', 60); // seconds
 
 // Session settings
@@ -81,3 +84,34 @@ function deleteDirectory($dir) {
 // Initialize
 cleanupOldFiles();
 ensureSessionDir();
+
+function loadEnvFile($envPath)
+{
+    if (!file_exists($envPath)) {
+        return;
+    }
+
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+
+        // Parse KEY=VALUE
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+
+            // Remove quotes if present
+            if ((strpos($value, '"') === 0 && strrpos($value, '"') === strlen($value) - 1) ||
+                (strpos($value, "'") === 0 && strrpos($value, "'") === strlen($value) - 1)) {
+                $value = substr($value, 1, -1);
+            }
+
+            putenv("{$key}={$value}");
+            $_ENV[$key] = $value;
+        }
+    }
+}

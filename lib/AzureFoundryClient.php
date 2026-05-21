@@ -109,11 +109,14 @@ PROMPT;
             ],
         ];
 
-        $ch = curl_init($this->endpoint);
+        // Build full endpoint URL for Azure Foundry
+        $url = rtrim($this->endpoint, '/') . '/chat/completions';
+
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'x-api-key: ' . $this->apiKey,
+            'Authorization: Bearer ' . $this->apiKey,
         ]);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
@@ -134,11 +137,15 @@ PROMPT;
         }
 
         $decoded = json_decode($response, true);
-        if (!$decoded || empty($decoded['content'][0]['text'])) {
-            throw new \Exception("Invalid API response format");
-        }
 
-        $content = $decoded['content'][0]['text'];
+        // Handle both Anthropic and Azure response formats
+        if (!empty($decoded['content'][0]['text'])) {
+            $content = $decoded['content'][0]['text'];
+        } elseif (!empty($decoded['choices'][0]['message']['content'])) {
+            $content = $decoded['choices'][0]['message']['content'];
+        } else {
+            throw new \Exception("Invalid API response format: " . json_encode($decoded));
+        }
 
         // Extract JSON from response
         if (preg_match('/\{[\s\S]*\}/', $content, $matches)) {
