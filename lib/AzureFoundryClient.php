@@ -41,7 +41,8 @@ class AzureFoundryClient
                 foreach ($quotesData as $index => $quote) {
                     $formatted .= "Quote #" . ($index + 1) . ":\n";
                     foreach ($quote as $key => $value) {
-                        $formatted .= "  {$key}: {$value}\n";
+                        $valueStr = is_array($value) ? json_encode($value) : (string)$value;
+                        $formatted .= "  {$key}: {$valueStr}\n";
                     }
                     $formatted .= "\n";
                 }
@@ -109,8 +110,8 @@ PROMPT;
             ],
         ];
 
-        // Build full endpoint URL for Azure Foundry
-        $url = rtrim($this->endpoint, '/') . '/chat/completions';
+        // Build full endpoint URL for Azure Foundry with api-version
+        $url = rtrim($this->endpoint, '/') . '/chat/completions?api-version=2024-04-01-preview';
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -132,7 +133,7 @@ PROMPT;
             throw new \Exception("API request failed: {$error}");
         }
 
-        if ($httpCode !== 200) {
+        if ($httpCode !== 200 && $httpCode !== 201) {
             throw new \Exception("API error (HTTP {$httpCode}): {$response}");
         }
 
@@ -152,6 +153,6 @@ PROMPT;
             return json_decode($matches[0], true);
         }
 
-        throw new \Exception("Failed to parse API response as JSON");
+        throw new \Exception("Failed to parse API response as JSON. Response: " . substr($content, 0, 200));
     }
 }
