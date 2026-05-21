@@ -23,14 +23,33 @@ try {
 
     // Handle multiple file uploads
     $files = $_FILES['files'];
-    $fileArray = is_array($files['name']) ? $files : [$files];
 
-    foreach ($fileArray as $file) {
+    // Convert single file to array format
+    if (!is_array($files['name'])) {
+        $files = [
+            'name' => [$files['name']],
+            'type' => [$files['type']],
+            'tmp_name' => [$files['tmp_name']],
+            'error' => [$files['error']],
+            'size' => [$files['size']],
+        ];
+    }
+
+    // Iterate through files
+    for ($i = 0; $i < count($files['name']); $i++) {
+        $file = [
+            'name' => $files['name'][$i],
+            'type' => $files['type'][$i],
+            'tmp_name' => $files['tmp_name'][$i],
+            'error' => $files['error'][$i],
+            'size' => $files['size'][$i],
+        ];
+
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $results[] = [
                 'name' => $file['name'],
                 'success' => false,
-                'error' => 'Upload error: ' . $this->getUploadError($file['error']),
+                'error' => 'Upload error: ' . getUploadError($file['error']),
             ];
             continue;
         }
