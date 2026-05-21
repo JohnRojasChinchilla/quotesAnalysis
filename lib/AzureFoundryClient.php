@@ -74,7 +74,7 @@ You are an expert procurement analyst. Analyze the following quotes and provide:
 2. **ANALYSIS**: Compare the quotes across price, value, quality, and terms
 3. **RECOMMENDATION**: Clearly state which quote is the best option to buy and why
 
-Format your response as JSON with this structure:
+You MUST respond with ONLY valid JSON in this exact format:
 {
     "comparison_table": [
         {
@@ -92,18 +92,20 @@ Format your response as JSON with this structure:
     }
 }
 
+QUOTES DATA:
 {$quotesText}{$contextNote}
 
-Ensure the JSON is valid and complete.
+IMPORTANT: Return ONLY the JSON object, no markdown formatting or extra text.
 PROMPT;
     }
 
     private function callApi($prompt)
     {
-        // Prepare request for Claude API
+        // Prepare request for OpenAI/Azure GPT models
         $payload = [
             'model' => $this->modelName,
             'max_tokens' => 4096,
+            'temperature' => 0.7,
             'messages' => [
                 [
                     'role' => 'user',
@@ -141,20 +143,27 @@ PROMPT;
 
         $decoded = json_decode($response, true);
 
-        // Handle both Anthropic and Azure response formats
-        if (!empty($decoded['content'][0]['text'])) {
-            $content = $decoded['content'][0]['text'];
-        } elseif (!empty($decoded['choices'][0]['message']['content'])) {
+        // OpenAI/Azure GPT response format
+        if (!empty($decoded['choices'][0]['message']['content'])) {
             $content = $decoded['choices'][0]['message']['content'];
         } else {
             throw new \Exception("Invalid API response format: " . json_encode($decoded));
         }
 
-        // Extract JSON from response
-        if (preg_match('/\{[\s\S]*\}/', $content, $matches)) {
-            return json_decode($matches[0], true);
+        // Extract JSON from response (GPT sometimes wraps it in markdown)
+        if (preg_match('/```(?:json)?\s*(\{[\s\S]*?\})\s*```/', $content, $matches)) {
+            $jsonStr = $matches[1];
+        } elseif (preg_match('/\{[\s\S]*\}/', $content, $matches)) {
+            $jsonStr = $matches[0];
+        } else {
+            throw new \Exception("Failed to extract JSON from response. Response: " . substr($content, 0, 200));
         }
 
-        throw new \Exception("Failed to parse API response as JSON. Response: " . substr($content, 0, 200));
+        $parsed = json_decode($jsonStr, true);
+        if (!$parsed) {
+            throw new \Exception("Failed to parse JSON response: " . substr($jsonStr, 0, 200));
+        }
+
+        return $parsed;
     }
 }
