@@ -114,8 +114,13 @@ PROMPT;
             ],
         ];
 
-        // Build full endpoint URL for Azure Foundry with api-version
-        $url = rtrim($this->endpoint, '/') . '/chat/completions?api-version=' . urlencode($this->apiVersion);
+        // Build full endpoint URL for Azure Foundry
+        $url = rtrim($this->endpoint, '/') . '/chat/completions';
+
+        // Only add api-version if not using /v1 path (OpenAI-compatible endpoint)
+        if (strpos($this->endpoint, '/v1') === false) {
+            $url .= '?api-version=' . urlencode($this->apiVersion);
+        }
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
