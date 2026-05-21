@@ -103,6 +103,10 @@ function buildPdfHtml($analysis)
         $analysis_text .= '</div>';
     }
 
+    $timestamp = !empty($_SESSION['analysis_timestamp'])
+        ? date('Y-m-d H:i:s', $_SESSION['analysis_timestamp'])
+        : 'Unknown';
+
     return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -119,7 +123,7 @@ function buildPdfHtml($analysis)
 <body>
     <div class="header">
         <h1>Quotes Analysis Report</h1>
-        <p class="timestamp">Generated on: {$_SESSION['analysis_timestamp'] ? date('Y-m-d H:i:s', $_SESSION['analysis_timestamp']) : 'Unknown'}</p>
+        <p class="timestamp">Generated on: {$timestamp}</p>
     </div>
 
     {$comparisonTable}
