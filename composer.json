@@ -1,0 +1,15 @@
+{
+    "name": "quotes-analysis/app",
+    "description": "AI-powered quotes analysis and comparison web app",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "dompdf/dompdf": "^2.0",
+        "smalot/pdfparser": "^2.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "QuotesAnalysis\\": "lib/"
+        }
+    }
+}

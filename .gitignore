@@ -1,0 +1,28 @@
+# Composer
+vendor/
+composer.lock
+
+# Uploads
+uploads/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+*.log
+
+# Temporary files
+*.tmp
+*.bak
