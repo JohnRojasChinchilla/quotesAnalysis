@@ -8,13 +8,15 @@ class AzureFoundryClient
     private $endpoint;
     private $modelName;
     private $timeout;
+    private $apiVersion;
 
-    public function __construct($apiKey = null, $endpoint = null, $modelName = null, $timeout = 60)
+    public function __construct($apiKey = null, $endpoint = null, $modelName = null, $timeout = 60, $apiVersion = null)
     {
         $this->apiKey = $apiKey ?: AZURE_API_KEY;
         $this->endpoint = $endpoint ?: AZURE_API_ENDPOINT;
         $this->modelName = $modelName ?: MODEL_NAME;
         $this->timeout = $timeout;
+        $this->apiVersion = $apiVersion ?: (defined('AZURE_API_VERSION') ? AZURE_API_VERSION : '2024-05-01-preview');
 
         if (empty($this->apiKey)) {
             throw new \Exception("Azure API Key not configured. Set AZURE_API_KEY environment variable.");
@@ -111,7 +113,7 @@ PROMPT;
         ];
 
         // Build full endpoint URL for Azure Foundry with api-version
-        $url = rtrim($this->endpoint, '/') . '/chat/completions?api-version=2024-04-01-preview';
+        $url = rtrim($this->endpoint, '/') . '/chat/completions?api-version=' . urlencode($this->apiVersion);
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

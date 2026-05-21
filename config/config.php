@@ -17,6 +17,7 @@ define('ALLOWED_EXTENSIONS', ['csv', 'xlsx', 'xls', 'pdf', 'txt']);
 // Azure Foundry / Claude API settings
 define('AZURE_API_KEY', getenv('AZURE_API_KEY') ?: ''); // Set via environment variable
 define('AZURE_API_ENDPOINT', getenv('AZURE_API_ENDPOINT') ?: 'https://api.anthropic.com/v1/messages');
+define('AZURE_API_VERSION', getenv('AZURE_API_VERSION') ?: '2024-05-01-preview'); // API version for Azure
 define('MODEL_NAME', 'claude-3-haiku-20250307'); // Or whichever model you're using
 define('API_TIMEOUT', 60); // seconds
 
