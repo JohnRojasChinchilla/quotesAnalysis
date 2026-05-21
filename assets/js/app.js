@@ -3,6 +3,7 @@ let selectedFiles = [];
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const uploadBtn = document.getElementById('uploadBtn');
+const getQuickSummaryBtn = document.getElementById('getQuickSummaryBtn');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const fileList = document.getElementById('fileList');
 const fileListContent = document.getElementById('fileListContent');
@@ -12,7 +13,11 @@ const progressText = document.getElementById('progressText');
 const errorContainer = document.getElementById('errorContainer');
 const errorMessage = document.getElementById('errorMessage');
 const successContainer = document.getElementById('successContainer');
+const quickSummaryContainer = document.getElementById('quickSummaryContainer');
+const quickSummaryContent = document.getElementById('quickSummaryContent');
+const criteriaContainer = document.getElementById('criteriaContainer');
 const contextInput = document.getElementById('contextInput');
+const criteriaInput = document.getElementById('criteriaInput');
 
 // Drag and drop
 uploadArea.addEventListener('click', () => fileInput.click());
@@ -74,6 +79,7 @@ function removeFile(index) {
 }
 
 uploadBtn.addEventListener('click', uploadFiles);
+getQuickSummaryBtn.addEventListener('click', getQuickSummary);
 analyzeBtn.addEventListener('click', analyzeQuotes);
 
 function uploadFiles() {
@@ -90,6 +96,8 @@ function uploadFiles() {
     progressContainer.style.display = 'block';
     errorContainer.style.display = 'none';
     successContainer.style.display = 'none';
+    quickSummaryContainer.style.display = 'none';
+    criteriaContainer.style.display = 'none';
     uploadBtn.disabled = true;
 
     // Simulate progress
@@ -113,7 +121,8 @@ function uploadFiles() {
             if (data.success) {
                 successContainer.style.display = 'block';
                 uploadBtn.style.display = 'none';
-                analyzeBtn.style.display = 'inline-block';
+                getQuickSummaryBtn.style.display = 'inline-block';
+                progressContainer.style.display = 'none';
 
                 // Check for any individual file errors
                 const failedFiles = data.files.filter(f => !f.success);
@@ -135,6 +144,82 @@ function uploadFiles() {
         });
 }
 
+function getQuickSummary() {
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Generating quick summary...';
+    errorContainer.style.display = 'none';
+    getQuickSummaryBtn.disabled = true;
+
+    // Simulate progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (progress < 90) {
+            progress += Math.random() * 30;
+            progressBar.style.width = Math.min(progress, 90) + '%';
+        }
+    }, 150);
+
+    fetch('api/quick-summary.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+
+            if (data.success) {
+                displayQuickSummary(data.summary);
+                criteriaContainer.style.display = 'block';
+                analyzeBtn.style.display = 'inline-block';
+                getQuickSummaryBtn.style.display = 'none';
+                progressContainer.style.display = 'none';
+            } else {
+                showError(data.error || 'Failed to generate summary');
+                getQuickSummaryBtn.disabled = false;
+                progressContainer.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            showError('Summary generation failed: ' + error.message);
+            getQuickSummaryBtn.disabled = false;
+            progressContainer.style.display = 'none';
+        });
+}
+
+function displayQuickSummary(summary) {
+    let html = '<div class="summary-content">';
+
+    if (summary.total_quotes) {
+        html += `<p><strong>Total Quotes:</strong> ${summary.total_quotes}</p>`;
+    }
+
+    if (summary.vendors && summary.vendors.length > 0) {
+        html += `<p><strong>Vendors:</strong> ${summary.vendors.join(', ')}</p>`;
+    }
+
+    if (summary.key_differences && summary.key_differences.length > 0) {
+        html += '<p><strong>Key Differences:</strong></p><ul>';
+        summary.key_differences.forEach(diff => {
+            html += `<li>${diff}</li>`;
+        });
+        html += '</ul>';
+    }
+
+    if (summary.summary) {
+        html += `<p><strong>Summary:</strong> ${summary.summary}</p>`;
+    }
+
+    html += '</div>';
+    quickSummaryContent.innerHTML = html;
+    quickSummaryContainer.style.display = 'block';
+}
+
 function analyzeQuotes() {
     progressContainer.style.display = 'block';
     progressBar.style.width = '0%';
@@ -154,6 +239,9 @@ function analyzeQuotes() {
     const payload = {};
     if (contextInput.value.trim()) {
         payload.context = contextInput.value.trim();
+    }
+    if (criteriaInput.value.trim()) {
+        payload.comparisonCriteria = criteriaInput.value.trim();
     }
 
     fetch('api/analyze.php', {

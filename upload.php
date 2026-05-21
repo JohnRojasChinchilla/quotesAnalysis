@@ -63,17 +63,44 @@ require __DIR__ . '/config/config.php';
                     </div>
                 </div>
 
+                <!-- Quick Summary Section (shown after upload) -->
+                <div id="quickSummaryContainer" class="mt-4" style="display: none;">
+                    <div class="card bg-light">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📊 Quick Summary</h5>
+                        </div>
+                        <div class="card-body" id="quickSummaryContent">
+                            <!-- Summary will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Criteria Section -->
+                <div id="criteriaContainer" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">What would you like to compare?</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="criteriaInput" class="form-label">Specify comparison criteria (optional):</label>
+                                <textarea class="form-control" id="criteriaInput" rows="3" placeholder="e.g., 'Compare by price and delivery time', 'Focus on warranty terms and support', 'Prioritize cost per unit and performance'"></textarea>
+                                <small class="text-muted">Leave empty for standard comparison</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="contextInput" class="form-label">Additional Context (optional):</label>
+                                <textarea class="form-control" id="contextInput" rows="2" placeholder="e.g., We prefer faster delivery over lower cost"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Action buttons -->
                 <div class="mt-4">
                     <button id="uploadBtn" class="btn btn-primary btn-lg" disabled>Upload Files</button>
-                    <button id="analyzeBtn" class="btn btn-success btn-lg" style="display: none;">Analyze Quotes</button>
+                    <button id="getQuickSummaryBtn" class="btn btn-info btn-lg" style="display: none;">Get Quick Summary</button>
+                    <button id="analyzeBtn" class="btn btn-success btn-lg" style="display: none;">Get Detailed Analysis</button>
                     <button id="resetBtn" class="btn btn-secondary" onclick="location.reload()">Reset</button>
-                </div>
-
-                <!-- Additional context -->
-                <div class="mt-4">
-                    <label for="contextInput" class="form-label">Additional Context (Optional):</label>
-                    <textarea class="form-control" id="contextInput" rows="3" placeholder="e.g., We prefer faster delivery over lower cost"></textarea>
                 </div>
             </div>
         </div>

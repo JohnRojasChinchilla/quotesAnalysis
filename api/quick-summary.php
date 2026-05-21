@@ -32,23 +32,14 @@ try {
         throw new Exception('No successfully parsed files available for analysis');
     }
 
-    // Get optional context and comparison criteria from request
-    $requestBody = json_decode(file_get_contents('php://input'), true);
-    $context = $requestBody['context'] ?? '';
-    $comparisonCriteria = $requestBody['comparisonCriteria'] ?? '';
-
-    // Call Azure Foundry for analysis
+    // Get quick summary
     $client = new AzureFoundryClient();
-    $analysisResult = $client->analyzeQuotes($allQuotesData, $context, $comparisonCriteria);
-
-    // Store result in session
-    $_SESSION['analysis_result'] = $analysisResult;
-    $_SESSION['analysis_timestamp'] = time();
+    $summary = $client->getQuickSummary($allQuotesData);
 
     echo json_encode([
         'success' => true,
-        'analysis' => $analysisResult,
-        'message' => 'Analysis completed successfully',
+        'summary' => $summary,
+        'message' => 'Quick summary generated successfully',
     ]);
 
 } catch (Exception $e) {

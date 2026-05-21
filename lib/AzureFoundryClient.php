@@ -23,12 +23,19 @@ class AzureFoundryClient
         }
     }
 
-    public function analyzeQuotes($quotesData, $context = '')
+    public function getQuickSummary($quotesData)
+    {
+        $quotesText = $this->formatQuotesForAnalysis($quotesData);
+        $prompt = $this->buildQuickSummaryPrompt($quotesText);
+        return $this->callApi($prompt);
+    }
+
+    public function analyzeQuotes($quotesData, $context = '', $comparisonCriteria = '')
     {
         // Convert parsed data to text format for Claude
         $quotesText = $this->formatQuotesForAnalysis($quotesData);
 
-        $prompt = $this->buildAnalysisPrompt($quotesText, $context);
+        $prompt = $this->buildDetailedAnalysisPrompt($quotesText, $context, $comparisonCriteria);
 
         return $this->callApi($prompt);
     }
@@ -61,6 +68,67 @@ class AzureFoundryClient
         }
 
         return $formatted;
+    }
+
+    private function buildQuickSummaryPrompt($quotesText)
+    {
+        return <<<PROMPT
+You are an expert procurement analyst. Analyze the following quotes and provide a CONCISE summary.
+
+Return ONLY valid JSON in this format:
+{
+    "total_quotes": 3,
+    "vendors": ["Vendor A", "Vendor B", "Vendor C"],
+    "key_differences": [
+        "Price range varies from X to Y",
+        "Delivery times range from A to B days",
+        "Main differences in specifications: ..."
+    ],
+    "summary": "Brief 2-3 sentence summary of the quotes"
+}
+
+QUOTES DATA:
+{$quotesText}
+
+IMPORTANT: Return ONLY the JSON object, no markdown formatting or extra text.
+PROMPT;
+    }
+
+    private function buildDetailedAnalysisPrompt($quotesText, $context = '', $comparisonCriteria = '')
+    {
+        $contextNote = $context ? "\n\nContext: {$context}" : '';
+        $criteriaNote = $comparisonCriteria ? "\n\nUser wants to compare specifically: {$comparisonCriteria}" : '';
+
+        return <<<PROMPT
+You are an expert procurement analyst. Analyze the following quotes and provide a detailed comparison.
+
+1. **COMPARISON TABLE**: Extract and organize all key fields (vendor/supplier name, price, delivery time, payment terms, specifications, etc.) into a clear comparison table
+2. **ANALYSIS**: Compare the quotes across price, value, quality, and terms
+3. **RECOMMENDATION**: Clearly state which quote is the best option to buy and why
+
+You MUST respond with ONLY valid JSON in this exact format:
+{
+    "comparison_table": [
+        {
+            "field": "Vendor Name",
+            "quote_1": "...",
+            "quote_2": "...",
+            "quote_3": "..."
+        }
+    ],
+    "analysis": "Detailed comparison analysis...",
+    "recommendation": {
+        "best_option": "Quote #X (Vendor Name)",
+        "reasons": ["reason 1", "reason 2", "reason 3"],
+        "confidence": "high/medium/low"
+    }
+}
+
+QUOTES DATA:
+{$quotesText}{$contextNote}{$criteriaNote}
+
+IMPORTANT: Return ONLY the JSON object, no markdown formatting or extra text.
+PROMPT;
     }
 
     private function buildAnalysisPrompt($quotesText, $context = '')
