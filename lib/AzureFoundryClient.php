@@ -40,6 +40,122 @@ class AzureFoundryClient
         return $this->callApi($prompt);
     }
 
+    public function sendChatMessage($userMessage, $quotesData)
+    {
+        $quotesContext = $this->formatQuotesForChat($quotesData);
+        return $this->sendChatCompletionRequest($quotesContext, $userMessage);
+    }
+
+    private function formatQuotesForChat($quotesData)
+    {
+        $formatted = "QUOTES FROM UPLOADED DOCUMENTS:\n\n";
+        $currentFile = '';
+
+        if (is_array($quotesData)) {
+            foreach ($quotesData as $index => $item) {
+                // Check if this is wrapped with file info
+                if (is_array($item) && isset($item['_file']) && isset($item['_data'])) {
+                    $fileName = $item['_file'];
+                    $data = $item['_data'];
+
+                    // Add file header if different from last
+                    if ($fileName !== $currentFile) {
+                        $currentFile = $fileName;
+                        $formatted .= "\n--- From: {$fileName} ---\n\n";
+                    }
+
+                    // Format the data
+                    if (is_array($data)) {
+                        foreach ($data as $key => $value) {
+                            $valueStr = is_array($value) ? json_encode($value) : (string)$value;
+                            $formatted .= "{$key}: {$valueStr}\n";
+                        }
+                    } else {
+                        $formatted .= trim($data);
+                    }
+                    $formatted .= "\n";
+                } else {
+                    // Fallback for non-wrapped data
+                    if (is_array($item)) {
+                        $formatted .= "Item #" . ($index + 1) . ":\n";
+                        foreach ($item as $key => $value) {
+                            $valueStr = is_array($value) ? json_encode($value) : (string)$value;
+                            $formatted .= "  {$key}: {$valueStr}\n";
+                        }
+                        $formatted .= "\n";
+                    } else if (is_string($item) && strlen($item) > 0) {
+                        $formatted .= trim($item) . "\n\n";
+                    }
+                }
+            }
+        } else {
+            $formatted .= $quotesData;
+        }
+
+        return $formatted;
+    }
+
+    private function sendChatCompletionRequest($quotesContext, $userMessage)
+    {
+        $systemPrompt = "You are a helpful assistant analyzing quotes provided by the user. "
+            . "Answer questions about these quotes, including themes, comparisons, analysis, etc. "
+            . "Be conversational and helpful. Format responses in markdown when appropriate.\n\n"
+            . "Here are the quotes to analyze:\n{$quotesContext}";
+
+        $payload = [
+            'model' => $this->modelName,
+            'max_tokens' => 2048,
+            'temperature' => 0.7,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => $systemPrompt,
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $userMessage,
+                ]
+            ],
+        ];
+
+        $url = rtrim($this->endpoint, '/') . '/chat/completions';
+        if (strpos($this->endpoint, '/v1') === false) {
+            $url .= '?api-version=' . urlencode($this->apiVersion);
+        }
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey,
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            throw new \Exception("API request failed: {$error}");
+        }
+
+        if ($httpCode !== 200 && $httpCode !== 201) {
+            throw new \Exception("API error (HTTP {$httpCode}): {$response}");
+        }
+
+        $decoded = json_decode($response, true);
+
+        if (!empty($decoded['choices'][0]['message']['content'])) {
+            return $decoded['choices'][0]['message']['content'];
+        } else {
+            throw new \Exception("Invalid API response format: " . json_encode($decoded));
+        }
+    }
+
     private function formatQuotesForAnalysis($quotesData)
     {
         $formatted = "QUOTES DATA TO ANALYZE:\n\n";

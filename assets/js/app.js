@@ -5,6 +5,7 @@ const fileInput = document.getElementById('fileInput');
 const uploadBtn = document.getElementById('uploadBtn');
 const getQuickSummaryBtn = document.getElementById('getQuickSummaryBtn');
 const analyzeBtn = document.getElementById('analyzeBtn');
+const chatBtn = document.getElementById('chatBtn');
 const fileList = document.getElementById('fileList');
 const fileListContent = document.getElementById('fileListContent');
 const progressContainer = document.getElementById('progressContainer');
@@ -81,6 +82,9 @@ function removeFile(index) {
 uploadBtn.addEventListener('click', uploadFiles);
 getQuickSummaryBtn.addEventListener('click', getQuickSummary);
 analyzeBtn.addEventListener('click', analyzeQuotes);
+chatBtn.addEventListener('click', () => {
+    window.location.href = 'chat.php';
+});
 
 function uploadFiles() {
     if (selectedFiles.length === 0) {
@@ -122,6 +126,7 @@ function uploadFiles() {
                 successContainer.style.display = 'block';
                 uploadBtn.style.display = 'none';
                 getQuickSummaryBtn.style.display = 'inline-block';
+                chatBtn.style.display = 'inline-block';
                 progressContainer.style.display = 'none';
 
                 // Check for any individual file errors

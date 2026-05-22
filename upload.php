@@ -100,6 +100,7 @@ require __DIR__ . '/config/config.php';
                     <button id="uploadBtn" class="btn btn-primary btn-lg" disabled>Upload Files</button>
                     <button id="getQuickSummaryBtn" class="btn btn-info btn-lg" style="display: none;">Get Quick Summary</button>
                     <button id="analyzeBtn" class="btn btn-success btn-lg" style="display: none;">Get Detailed Analysis</button>
+                    <button id="chatBtn" class="btn btn-warning btn-lg" style="display: none;">💬 Chat with Quotes</button>
                     <button id="resetBtn" class="btn btn-secondary" onclick="location.reload()">Reset</button>
                 </div>
             </div>
